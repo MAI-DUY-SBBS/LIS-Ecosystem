@@ -1,0 +1,57 @@
+{
+  "smart_box": {
+    "id": "SBBox-LIS-Room",
+    "version": "0.1.0",
+    "domain": "AI-Native University"
+  },
+
+  "capabilities": [
+    {
+      "name": "create_room",
+      "description": "Create a learning communication room",
+      "input": [
+        "room_name",
+        "teacher_identity"
+      ],
+      "output": [
+        "room_id",
+        "room_url"
+      ]
+    },
+
+    {
+      "name": "join_room",
+      "description": "Allow students to join a learning room",
+      "input": [
+        "access_link",
+        "student_identity"
+      ],
+      "output": [
+        "membership_status"
+      ]
+    },
+
+    {
+      "name": "broadcast_message",
+      "description": "Teacher sends messages to learners",
+      "input": [
+        "message_content",
+        "teacher_identity"
+      ],
+      "output": [
+        "message_stream"
+      ]
+    },
+
+    {
+      "name": "generate_qr",
+      "description": "Generate QR code for room access",
+      "input": [
+        "room_url"
+      ],
+      "output": [
+        "qr_code"
+      ]
+    }
+  ]
+}
