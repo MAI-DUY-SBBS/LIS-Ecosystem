@@ -1,30 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import { roomService, qrService } from "../lib/room/container";
+
+import { qrService } from "../lib/room/container";
 
 export default function Home() {
   const [roomName, setRoomName] = useState("");
   const [teacherIdentity, setTeacherIdentity] = useState("");
   const [roomUrl, setRoomUrl] = useState("");
   const [qrCode, setQrCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function createRoom() {
     if (!roomName.trim() || !teacherIdentity.trim()) {
       return;
     }
 
-    const room = await roomService.createRoom(
-      roomName,
-      teacherIdentity,
-    );
+    setErrorMessage("");
 
-    const url = `${window.location.origin}/room/${room.room_id}`;
+    try {
+      const response = await fetch("/api/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          roomName,
+          teacherIdentity,
+        }),
+      });
 
-    const qr = await qrService.generateQR(url);
+      const data = await response.json();
 
-    setRoomUrl(url);
-    setQrCode(qr);
+      if (!response.ok) {
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "Unable to create room",
+        );
+      }
+
+      const url = data.room_url;
+
+      const qr = await qrService.generateQR(url);
+
+      setRoomUrl(url);
+      setQrCode(qr);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to create room",
+      );
+    }
   }
 
   return (
@@ -63,7 +91,9 @@ export default function Home() {
               <input
                 type="text"
                 value={roomName}
-                onChange={(event) => setRoomName(event.target.value)}
+                onChange={(event) =>
+                  setRoomName(event.target.value)
+                }
                 placeholder="Example: Mathematics 11A1"
                 className="w-full rounded-xl border border-slate-300
                            px-4 py-3 outline-none
@@ -91,7 +121,10 @@ export default function Home() {
 
             <button
               onClick={createRoom}
-              disabled={!roomName.trim() || !teacherIdentity.trim()}
+              disabled={
+                !roomName.trim() ||
+                !teacherIdentity.trim()
+              }
               className="rounded-xl bg-slate-900 px-5 py-3
                          text-sm font-medium text-white
                          disabled:cursor-not-allowed
@@ -99,6 +132,18 @@ export default function Home() {
             >
               Create Room
             </button>
+
+            {errorMessage && (
+              <div className="rounded-xl bg-slate-50 p-5">
+                <p className="text-sm font-medium text-slate-500">
+                  Unable to create room
+                </p>
+
+                <p className="mt-2 text-sm font-semibold">
+                  {errorMessage}
+                </p>
+              </div>
+            )}
           </div>
         </section>
 

@@ -1,13 +1,82 @@
+"use client";
+
+import { useState } from "react";
+
 type RoomPageProps = {
   params: Promise<{
     roomId: string;
   }>;
 };
 
-export default async function RoomPage({
+type JoinRoomResponse = {
+  room_id?: string;
+  student_identity?: string;
+  joined_at?: string;
+  status?: string;
+  error?: string;
+};
+
+export default function RoomPage({
   params,
 }: RoomPageProps) {
-  const { roomId } = await params;
+  const [roomId, setRoomId] = useState("");
+  const [studentIdentity, setStudentIdentity] = useState("");
+  const [membershipStatus, setMembershipStatus] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function joinRoom() {
+    const normalizedStudentIdentity =
+      studentIdentity.trim();
+
+    if (!normalizedStudentIdentity) {
+      return;
+    }
+
+    setMembershipStatus("");
+    setErrorMessage("");
+
+    try {
+      const resolvedParams = await params;
+      const resolvedRoomId = resolvedParams.roomId;
+
+      setRoomId(resolvedRoomId);
+
+      const response = await fetch(
+        `/api/rooms/${resolvedRoomId}/join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            studentIdentity:
+              normalizedStudentIdentity,
+          }),
+        },
+      );
+
+      const data =
+        (await response.json()) as JoinRoomResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "Unable to join room",
+        );
+      }
+
+      setMembershipStatus(
+        `Joined successfully · ${data.status}`,
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to join room",
+      );
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -32,8 +101,71 @@ export default async function RoomPage({
           </p>
 
           <p className="mt-2 break-all font-mono text-sm">
-            {roomId}
+            {roomId || "Resolving room..."}
           </p>
+        </section>
+
+        <section className="mt-6 rounded-2xl border bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-semibold">
+            Student Access
+          </h2>
+
+          <p className="mt-2 text-sm text-slate-600">
+            Enter your student identity to join this learning room.
+          </p>
+
+          <div className="mt-6">
+            <label className="mb-2 block text-sm font-medium">
+              Student identity
+            </label>
+
+            <input
+              type="text"
+              value={studentIdentity}
+              onChange={(event) =>
+                setStudentIdentity(event.target.value)
+              }
+              placeholder="Example: Student 001"
+              className="w-full rounded-xl border border-slate-300
+                         px-4 py-3 outline-none
+                         focus:border-slate-500"
+            />
+          </div>
+
+          <button
+            onClick={joinRoom}
+            disabled={!studentIdentity.trim()}
+            className="mt-4 rounded-xl bg-slate-900 px-5 py-3
+                       text-sm font-medium text-white
+                       disabled:cursor-not-allowed
+                       disabled:opacity-40"
+          >
+            Join Room
+          </button>
+
+          {membershipStatus && (
+            <div className="mt-6 rounded-xl bg-slate-50 p-5">
+              <p className="text-sm font-medium text-slate-500">
+                Membership
+              </p>
+
+              <p className="mt-2 font-semibold text-slate-900">
+                {membershipStatus}
+              </p>
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="mt-6 rounded-xl bg-slate-50 p-5">
+              <p className="text-sm font-medium text-slate-500">
+                Unable to join
+              </p>
+
+              <p className="mt-2 font-semibold text-slate-900">
+                {errorMessage}
+              </p>
+            </div>
+          )}
         </section>
 
         <section className="mt-6 rounded-2xl border bg-white p-8 shadow-sm">
@@ -61,8 +193,8 @@ export default async function RoomPage({
           <div className="mt-4 space-y-2 text-sm text-slate-600">
             <p>✓ Room identity resolved</p>
             <p>✓ Learning room route active</p>
+            <p>✓ Student membership capability connected</p>
             <p>○ Persistent room data — coming next</p>
-            <p>○ Student membership — coming next</p>
             <p>○ Teacher announcements — coming next</p>
           </div>
         </section>
