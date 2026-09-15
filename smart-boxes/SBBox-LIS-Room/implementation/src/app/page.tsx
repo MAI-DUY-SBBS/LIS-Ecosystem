@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 
-import { qrService } from "../lib/room/container";
+type CreateRoomResponse = {
+  room_id?: string;
+  room_name?: string;
+  teacher_identity?: string;
+  created_at?: string;
+  status?: string;
+  room_url?: string;
+  qr_code?: string;
+  error?: string;
+};
 
 export default function Home() {
   const [roomName, setRoomName] = useState("");
@@ -30,7 +39,8 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      const data =
+        (await response.json()) as CreateRoomResponse;
 
       if (!response.ok) {
         throw new Error(
@@ -40,12 +50,17 @@ export default function Home() {
         );
       }
 
-      const url = data.room_url;
+      if (
+        typeof data.room_url !== "string" ||
+        typeof data.qr_code !== "string"
+      ) {
+        throw new Error(
+          "Invalid room response from server",
+        );
+      }
 
-      const qr = await qrService.generateQR(url);
-
-      setRoomUrl(url);
-      setQrCode(qr);
+      setRoomUrl(data.room_url);
+      setQrCode(data.qr_code);
     } catch (error) {
       setErrorMessage(
         error instanceof Error

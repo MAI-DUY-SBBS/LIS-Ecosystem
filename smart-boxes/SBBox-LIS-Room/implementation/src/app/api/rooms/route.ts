@@ -1,4 +1,4 @@
-import { roomService } from "../../../lib/room/container";
+import { roomService, qrService } from "../../../lib/room/container";
 
 type CreateRoomRequest = {
   roomName?: unknown;
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
       requestUrl.origin,
     ).toString();
 
+    const qrCode =
+      await qrService.generateQR(roomUrl);
+
     return Response.json({
       room_id: room.room_id,
       room_name: room.room_name,
@@ -42,6 +45,7 @@ export async function POST(request: Request) {
       created_at: room.created_at,
       status: room.status,
       room_url: roomUrl,
+      qr_code: qrCode,
     });
   } catch (error) {
     return Response.json(
