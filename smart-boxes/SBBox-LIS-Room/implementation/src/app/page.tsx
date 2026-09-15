@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { roomService } from "../lib/room/container";
 
 export default function Home() {
   const [roomName, setRoomName] = useState("");
   const [teacherIdentity, setTeacherIdentity] = useState("");
   const [roomUrl, setRoomUrl] = useState("");
 
-  function createRoom() {
+  async function createRoom() {
     if (!roomName.trim() || !teacherIdentity.trim()) {
       return;
     }
 
-    const roomId = crypto.randomUUID();
+    const room = await roomService.createRoom(
+      roomName,
+      teacherIdentity,
+    );
 
-    const url = `${window.location.origin}/room/${roomId}`;
+    const url = `${window.location.origin}/room/${room.room_id}`;
 
     setRoomUrl(url);
   }
