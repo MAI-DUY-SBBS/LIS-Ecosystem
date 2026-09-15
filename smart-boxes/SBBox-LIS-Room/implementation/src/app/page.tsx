@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { roomService } from "../lib/room/container";
+import { roomService, qrService } from "../lib/room/container";
 
 export default function Home() {
   const [roomName, setRoomName] = useState("");
   const [teacherIdentity, setTeacherIdentity] = useState("");
   const [roomUrl, setRoomUrl] = useState("");
+  const [qrCode, setQrCode] = useState("");
 
   async function createRoom() {
     if (!roomName.trim() || !teacherIdentity.trim()) {
@@ -20,7 +21,10 @@ export default function Home() {
 
     const url = `${window.location.origin}/room/${room.room_id}`;
 
+    const qr = await qrService.generateQR(url);
+
     setRoomUrl(url);
+    setQrCode(qr);
   }
 
   return (
@@ -133,6 +137,26 @@ export default function Home() {
                 {roomUrl}
               </p>
             </div>
+
+            {qrCode && (
+              <div className="mt-6 rounded-xl bg-slate-50 p-6">
+                <p className="text-sm font-medium text-slate-500">
+                  Scan to Join
+                </p>
+
+                <div className="mt-4 flex justify-center">
+                  <img
+                    src={qrCode}
+                    alt="QR code for joining the learning room"
+                    className="h-64 w-64 rounded-xl border bg-white p-3"
+                  />
+                </div>
+
+                <p className="mt-4 text-center text-sm text-slate-500">
+                  Scan this QR code with a phone to access the learning room.
+                </p>
+              </div>
+            )}
           </section>
         )}
 
