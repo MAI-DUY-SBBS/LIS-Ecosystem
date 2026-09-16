@@ -23,6 +23,15 @@ type MessagesResponse = {
   error?: string;
 };
 
+type RoomAccessResponse = {
+  room_id?: string;
+  room_name?: string;
+  teacher_identity?: string;
+  room_url?: string;
+  qr_code?: string;
+  error?: string;
+};
+
 export default function TeacherPage({
   params,
 }: TeacherPageProps) {
@@ -35,8 +44,20 @@ export default function TeacherPage({
   const [messages, setMessages] =
     useState<RoomMessage[]>([]);
 
+  const [studentRoomUrl, setStudentRoomUrl] =
+    useState("");
+
+  const [qrCode, setQrCode] =
+    useState("");
+
   const [loadingMessages, setLoadingMessages] =
     useState(false);
+
+  const [loadingAccess, setLoadingAccess] =
+    useState(false);
+
+  const [copyStatus, setCopyStatus] =
+    useState("");
 
   const [messageStatus, setMessageStatus] =
     useState("");
@@ -48,11 +69,13 @@ export default function TeacherPage({
     async function resolveRoom() {
       try {
         const resolvedParams = await params;
-        const resolvedRoomId = resolvedParams.roomId;
+        const resolvedRoomId =
+          resolvedParams.roomId;
 
         setRoomId(resolvedRoomId);
 
         await loadMessages(resolvedRoomId);
+        await loadRoomAccess(resolvedRoomId);
       } catch (error) {
         setErrorMessage(
           error instanceof Error
@@ -78,6 +101,53 @@ export default function TeacherPage({
       window.clearInterval(intervalId);
     };
   }, [roomId]);
+
+  async function loadRoomAccess(
+    resolvedRoomId: string,
+  ) {
+    setLoadingAccess(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch(
+        `/api/rooms/${resolvedRoomId}/access`,
+        {
+          cache: "no-store",
+        },
+      );
+
+      const data =
+        (await response.json()) as RoomAccessResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "Unable to load student access",
+        );
+      }
+
+      if (
+        typeof data.room_url !== "string" ||
+        typeof data.qr_code !== "string"
+      ) {
+        throw new Error(
+          "Invalid student access response",
+        );
+      }
+
+      setStudentRoomUrl(data.room_url);
+      setQrCode(data.qr_code);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to load student access",
+      );
+    } finally {
+      setLoadingAccess(false);
+    }
+  }
 
   async function loadMessages(
     resolvedRoomId: string,
@@ -117,6 +187,30 @@ export default function TeacherPage({
       );
     } finally {
       setLoadingMessages(false);
+    }
+  }
+
+  async function copyStudentLink() {
+    if (!studentRoomUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        studentRoomUrl,
+      );
+
+      setCopyStatus(
+        "Student link copied successfully",
+      );
+
+      window.setTimeout(() => {
+        setCopyStatus("");
+      }, 2000);
+    } catch {
+      setCopyStatus(
+        "Unable to copy student link",
+      );
     }
   }
 
@@ -168,7 +262,9 @@ export default function TeacherPage({
       }
 
       setMessageContent("");
-      setMessageStatus("Message sent successfully");
+      setMessageStatus(
+        "Message sent successfully",
+      );
 
       await loadMessages(roomId);
     } catch (error) {
@@ -205,6 +301,78 @@ export default function TeacherPage({
           <p className="mt-2 break-all font-mono text-sm">
             {roomId || "Resolving room..."}
           </p>
+        </section>
+
+        <section className="mt-6 rounded-2xl border bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-semibold">
+            Student Access
+          </h2>
+
+          <p className="mt-2 text-sm text-slate-600">
+            Share this link or QR code with students
+            so they can enter the learning room.
+          </p>
+
+          {loadingAccess ? (
+            <div className="mt-6 rounded-xl bg-slate-50 p-5">
+              <p className="text-sm text-slate-500">
+                Loading student access...
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-6">
+                <label className="mb-2 block text-sm font-medium">
+                  Student Room Link
+                </label>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    type="text"
+                    value={studentRoomUrl}
+                    readOnly
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none"
+                  />
+
+                  <button
+                    onClick={copyStudentLink}
+                    disabled={!studentRoomUrl}
+                    className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Copy Student Link
+                  </button>
+                </div>
+
+                {copyStatus && (
+                  <p className="mt-3 text-sm font-medium text-slate-600">
+                    {copyStatus}
+                  </p>
+                )}
+              </div>
+
+              {qrCode && (
+                <div className="mt-8 rounded-xl bg-slate-50 p-6">
+                  <p className="text-sm font-medium text-slate-500">
+                    Student Room QR Code
+                  </p>
+
+                  <div className="mt-5 flex justify-center">
+                    <img
+                      src={qrCode}
+                      alt="QR code for joining the student learning room"
+                      className="h-64 w-64 rounded-xl border bg-white p-3"
+                    />
+                  </div>
+
+                  <p className="mt-4 text-center text-sm text-slate-500">
+                    Students can scan this QR code
+                    with their phone to join the
+                    learning room.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </section>
 
         <section className="mt-6 rounded-2xl border bg-white p-8 shadow-sm">
@@ -359,6 +527,8 @@ export default function TeacherPage({
 
           <div className="mt-4 space-y-2 text-sm text-slate-600">
             <p>✓ Room identity resolved</p>
+            <p>✓ Student access link connected</p>
+            <p>✓ Student QR code connected</p>
             <p>✓ Teacher message connected</p>
             <p>✓ Message API connected</p>
             <p>✓ Message persistence connected</p>
