@@ -1,17 +1,21 @@
-import { InMemoryRoomRepository } from "./in-memory-repository";
-import { InMemoryRoomMembershipRepository } from "./in-memory-membership-repository";
+import { PostgresRoomRepository } from "./postgres-repository";
+
+import { PostgresRoomMembershipRepository } from "./postgres-membership-repository";
 
 import { QRService } from "./qr-service";
 
 import { MembershipService } from "./membership-service";
+
 import { RoomService } from "./service";
 
-const roomRepository = new InMemoryRoomRepository();
+const roomRepository = new PostgresRoomRepository();
 
 const roomMembershipRepository =
-  new InMemoryRoomMembershipRepository();
+  new PostgresRoomMembershipRepository();
 
-export const roomService = new RoomService(roomRepository);
+export const roomService = new RoomService(
+  roomRepository,
+);
 
 export const membershipService = new MembershipService(
   roomRepository,
