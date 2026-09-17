@@ -1,0 +1,100 @@
+{
+  "smart_box": {
+    "id": "SBBox-LIS-LiveVoice",
+    "version": "0.1.0",
+    "domain": "AI-Native University"
+  },
+
+  "capabilities": [
+    {
+      "name": "start_live_voice",
+      "description": "Start a live voice session for a learning room",
+      "input": [
+        "room_id",
+        "teacher_identity"
+      ],
+      "output": [
+        "voice_session_id",
+        "session_status"
+      ]
+    },
+
+    {
+      "name": "join_live_voice",
+      "description": "Allow a student to join a live voice session as a listener",
+      "input": [
+        "room_id",
+        "student_identity"
+      ],
+      "output": [
+        "voice_session_id",
+        "session_status",
+        "listener_status"
+      ]
+    },
+
+    {
+      "name": "stop_live_voice",
+      "description": "Stop an active live voice session",
+      "input": [
+        "voice_session_id",
+        "teacher_identity"
+      ],
+      "output": [
+        "voice_session_id",
+        "session_status",
+        "audio_segment_id"
+      ]
+    },
+
+    {
+      "name": "receive_live_voice",
+      "description": "Deliver teacher live voice to authorized learners",
+      "input": [
+        "voice_session_id",
+        "student_identity"
+      ],
+      "output": [
+        "voice_stream_status"
+      ]
+    },
+
+    {
+      "name": "record_voice_segment",
+      "description": "Preserve a completed live voice session as an audio learning segment",
+      "input": [
+        "voice_session_id",
+        "segment_start",
+        "segment_end"
+      ],
+      "output": [
+        "audio_segment_id",
+        "audio_artifact"
+      ]
+    },
+
+    {
+      "name": "play_voice_segment",
+      "description": "Play a completed audio learning segment",
+      "input": [
+        "audio_segment_id",
+        "requester_identity"
+      ],
+      "output": [
+        "playback_status"
+      ]
+    },
+
+    {
+      "name": "download_voice_segment",
+      "description": "Allow an authorized user to download a completed audio learning segment",
+      "input": [
+        "audio_segment_id",
+        "requester_identity"
+      ],
+      "output": [
+        "download_url"
+      ]
+    }
+  ]
+}
